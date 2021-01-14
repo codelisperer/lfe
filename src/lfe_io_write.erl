@@ -109,7 +109,7 @@ map_body([KV|KVs], D) ->
     [Massoc,$\s|map_body(KVs, D-1)].
 
 map_assoc({K,V}, D) ->
-    [term(K, D-1),$\s,term(V, D-1)].
+    [$(,term(K, D-1),$\s,term(V, D-1),$)].
 
 %% quote_symbol(Symbol, SymbChars) -> bool().
 %%  Check if symbol needs to be quoted when printed. If it can read as

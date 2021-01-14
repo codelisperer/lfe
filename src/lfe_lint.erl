@@ -70,12 +70,12 @@ format_error({bad_attribute,A}) ->
     lfe_io:format1("bad attribute: ~w", [A]);
 format_error({bad_meta,M}) ->
     lfe_io:format1("bad metadata: ~w", [M]);
-format_error({bad_form,Type}) ->
-    lfe_io:format1("bad ~w form", [Type]);
-format_error({bad_gform,Type}) ->
-    lfe_io:format1("bad ~w guard form", [Type]);
-format_error({bad_pat,Type}) ->
-    lfe_io:format1("bad ~w pattern", [Type]);
+format_error({bad_form,Form}) ->
+    lfe_io:format1("bad ~w form", [Form]);
+format_error({bad_gform,Form}) ->
+    lfe_io:format1("bad ~w guard form", [Form]);
+format_error({bad_pat,Pat}) ->
+    lfe_io:format1("bad ~w pattern", [Pat]);
 format_error({unbound_symb,S}) ->
     lfe_io:format1("symbol ~w unbound", [S]);
 format_error({undefined_func,F}) ->
@@ -812,7 +812,7 @@ expr_update_map(Map, Pairs, Env, L, St0) ->
     St1 = check_expr(Map, Env, L, St0),
     expr_map_pairs(Pairs, Env, L, St1).
 
-expr_map_pairs([K,V|As], Env, L, St0) ->
+expr_map_pairs([[K,V]|As], Env, L, St0) ->
     St1 = expr_map_assoc(K, V, Env, L, St0),
     expr_map_pairs(As, Env, L, St1);
 expr_map_pairs([],  _, _, St) -> St;
@@ -1439,7 +1439,7 @@ pat_bit_expr(_, Bvs, _, _, L, St) ->
 %% pat_map(Pairs, PatVars, Env, Line, State) -> {PatVars,State}.
 
 -ifdef(HAS_MAPS).
-pat_map([K,V|As], Pvs0, Env, L, St0) ->
+pat_map([[K,V]|As], Pvs0, Env, L, St0) ->
     {Pvs1,St1} = pat_map_assoc(K, V, Pvs0, Env, L, St0),
     pat_map(As, Pvs1, Env, L, St1);
 pat_map([], Pvs, _, _, St) -> {Pvs,St};

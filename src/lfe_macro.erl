@@ -1386,12 +1386,8 @@ exp_backquote(X, N) when is_tuple(X) ->
 exp_backquote(X, N) when ?IS_MAP(X) ->
     %% Splicing at top-level almost meaningless here, with [list|...]
     %% we have no splicing, while with [cons|...] we have splicing
-    case exp_bq_map_pairs(maps:to_list(X), N) of
-        [list|KVs] -> [map|KVs];                %No splicing
-        %% [cons|_]=E ->                        %Have splicing
-        %%      [call,?Q(maps),?Q(from_list)|E];
-        [] -> [map]                             %The empty map
-    end;
+    KVs =  exp_bq_map_pairs(maps:to_list(X), N),
+    [map|KVs];
 exp_backquote(X, _) when is_atom(X) -> [quote,X];
 exp_backquote(X, _) -> X.                       %Self quoting
 
@@ -1413,10 +1409,11 @@ exp_bq_cons(L, R) -> [cons,L,R].
 
 -ifdef(HAS_MAPS).
 exp_bq_map_pairs(Ps, N) ->
-    KVs = foldr(fun ({K,V}, Acc) -> [K,V|Acc] end, [], Ps),
-    exp_backquote(KVs, N).
+    lists:map(fun ({K,V}) ->
+                      [exp_backquote(K, N),exp_backquote(V, N)]
+              end, Ps).
 -else.
-exp_bq_map_pairs(_, _) -> [list].
+exp_bq_map_pairs(_, _) -> [].                   %The empty map
 -endif.
 
 new_symb(St) ->

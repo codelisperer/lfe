@@ -473,7 +473,7 @@ eval_float_bitseg(Val, Sz, native) -> <<Val:Sz/float-native>>.
 
 %% map_pairs(Args, Env) -> [{K,V}].
 
-map_pairs([K,V|As], Env) ->
+map_pairs([[K,V]|As], Env) ->
     P = {map_key(K, Env),eval_expr(V, Env)},
     [P|map_pairs(As, Env)];
 map_pairs([], _) -> [];
@@ -1239,7 +1239,7 @@ get_float_bitseg(Bin, Sz, native) ->
 
 %% match_map(Pairs, Map, PatBindings, Env) -> {yes,PatBindings} | no.
 
-match_map([K,V|Ps], Map, Pbs0, Env) ->
+match_map([[K,V]|Ps], Map, Pbs0, Env) ->
     Pat = pat_map_key(K),                       %Evaluate the key
     case maps:is_key(Pat, Map) of
         true ->
@@ -1274,7 +1274,7 @@ eval_lit([tuple|Es], Env) ->
 eval_lit([binary|Bs], Env) ->
     eval_lit_binary(Bs, Env);
 eval_lit([map|As], Env) ->
-    KVs = eval_lit_map(As, Env),
+    KVs = lit_map_pairs(As, Env),
     maps:from_list(KVs);
 eval_lit([_|_]=Lit, _) ->                       %All other lists illegal
     eval_error({illegal_literal,Lit});
@@ -1293,9 +1293,8 @@ eval_lit_binary(Segs, Env) ->
     Eval = fun (S) -> eval_lit(S, Env) end,
     eval_bitsegs(Vsps, Eval).
 
-eval_lit_map([K,V|As], Env) ->
-    [{eval_lit(K, Env),eval_lit(V, Env)}|eval_lit_map(As, Env)];
-eval_lit_map([], _) -> [].
+lit_map_pairs(As, Env) ->
+   lists:map(fun ([K,V]) -> {eval_lit(K, Env),eval_lit(V, Env)} end, As).
 
 %% Error functions.
 

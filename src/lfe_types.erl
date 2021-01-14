@@ -63,12 +63,14 @@ is_type_decl(_Other) -> false.
 from_type_def({type,_L,union,Types}) ->         %Special case union
     ['UNION'|from_type_defs(Types)];
 from_type_def({type,_L,tuple,any}) -> [tuple];  %Special case tuple() -> (tuple)
+from_type_def({type,_L,tuple,Elems}) ->
+    list_to_tuple(from_type_defs(Elems));
 from_type_def({type,_L,binary,Bits}) when Bits =/= [] ->
      [bitstring|from_type_defs(Bits)];          %Flip binary<->bitstring here
 %% from_type_def({type,_L,bitstring,[]}) -> [bitstring,[]];
 from_type_def({type,_L,map,any}) -> [map];      %Special case map() -> (map)
 from_type_def({type,_L,map,Pairs}) ->
-    [map|from_map_pairs(Pairs)];
+    maps:from_list(from_map_pairs(Pairs));
 from_type_def({type,_L,record,[{atom,_L,Name}|Fields]}) ->
     [record,Name|from_rec_fields(Fields)];
 from_type_def({type,_L,'fun',[Args,Ret]}) ->
@@ -92,7 +94,9 @@ from_type_defs(Ts) ->
 
 from_map_pairs(Pairs) ->
     %% Lose distinction between assoc and exact pairs.
-    Fun = fun ({type,_L,_P,Types}) -> from_type_defs(Types) end,
+    Fun = fun ({type,_L,_P,[Kt,Vt]}) ->
+		  {from_type_def(Kt),from_type_def(Vt)}
+	  end,
     lists:map(Fun, Pairs).
 
 from_rec_fields(Fields) ->
@@ -148,6 +152,12 @@ to_type_def([Type|Args], Line) ->
                   end,
             {Tag,Line,Type,Dargs}
         end;
+to_type_def(Tup, Line) when is_tuple(Tup) ->
+    {type,Line,tuple,to_type_defs(tuple_to_list(Tup), Line)};
+to_type_def(Map, Line) when ?IS_MAP(Map) ->
+    Fun = fun ({K,V}) -> [K,V] end,		%Convert to list pairs
+    ToPairs = to_map_pairs(lists:map(Fun, maps:to_list(Map)), Line),
+    {type,Line,map,ToPairs};
 to_type_def(Val, Line) when is_integer(Val) ->  %Literal integer value
     to_lit(Val, Line);
 to_type_def(Val, Line) when is_atom(Val) ->     %Variable
@@ -218,7 +228,12 @@ check_type_def([call,?Q(M),?Q(T)|Args], Recs, Tvs) when is_atom(M), is_atom(T) -
 %% The standard Erlang types.
 check_type_def([Type|Args], Recs, Tvs0) when is_atom(Type) ->
     check_type_defs(Args, Recs, Tvs0);
-%% Only integers and atoms (type variables) legally left now.
+%% Only literal tuples,  maps, integers and atoms (type variables) left now.
+check_type_def(Tup, Recs, Tvs) when is_tuple(Tup) ->
+    check_type_defs(tuple_to_list(Tup), Recs, Tvs);
+check_type_def(Map, Recs, Tvs) when ?IS_MAP(Map) ->
+    Fun = fun ({K,V}) -> [K,V] end,		%Convert to list pairs
+    check_map_pairs(lists:map(Fun, maps:to_list(Map)), Recs, Tvs);
 check_type_def(Val, _Recs, Tvs) when is_integer(Val) -> {ok,Tvs};
 check_type_def(Val, _Recs, Tvs) when is_atom(Val) ->
     %% It's a type variable.

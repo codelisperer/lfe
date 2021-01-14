@@ -259,7 +259,7 @@ from_map_assocs([{_,_,Key,Val}|As], Vt0, St0) ->
     {Lk,Vt1,St1} = from_expr(Key, Vt0, St0),
     {Lv,Vt2,St2} = from_expr(Val, Vt1, St1),
     {Las,Vt3,St3} = from_map_assocs(As, Vt2, St2),
-    {[Lk,Lv|Las],Vt3,St3};
+    {[[Lk,Lv]|Las],Vt3,St3};
 from_map_assocs([], Vt, St) -> {[],Vt,St}.
 
 %% from_map_update(MapAssocs, CurrAssoc, CurrMap, VarTable, State) ->
@@ -271,22 +271,22 @@ from_map_update([{Assoc,_,Key,Val}|As], Curr, Map0, Vt0, St0) ->
     {Lk,Vt1,St1} = from_expr(Key, Vt0, St0),
     {Lv,Vt2,St2} = from_expr(Val, Vt1, St1),
     %% Check if can continue this mapping or need to start a new one.
-    Map1 = if Assoc =:= Curr -> Map0 ++ [Lk,Lv];
-              Assoc =:= map_field_assoc -> ['map-set',Map0,Lk,Lv];
-              Assoc =:= map_field_exact -> ['map-update',Map0,Lk,Lv]
+    Map1 = if Assoc =:= Curr -> Map0 ++ [[Lk,Lv]];
+              Assoc =:= map_field_assoc -> ['map-set',Map0,[Lk,Lv]];
+              Assoc =:= map_field_exact -> ['map-update',Map0,[Lk,Lv]]
            end,
     from_map_update(As, Assoc, Map1, Vt2, St2);
 %% from_map_update([{Assoc,_,Key,Val}|Fs], Assoc, Map0, Vt0, St0) ->
 %%     {Lk,Vt1,St1} = from_expr(Key, Vt0, St0),
 %%     {Lv,Vt2,St2} = from_expr(Val, Vt1, St1),
-%%     from_map_update(Fs, Assoc, Map0 ++ [Lk,Lv], Vt2, St2);
+%%     from_map_update(Fs, Assoc, Map0 ++ [[Lk,Lv]], Vt2, St2);
 %% from_map_update([{Assoc,_,Key,Val}|Fs], _, Map0, Vt0, St0) ->
 %%     {Lk,Vt1,St1} = from_expr(Key, Vt0, St0),
 %%     {Lv,Vt2,St2} = from_expr(Val, Vt1, St1),
 %%     Op = if Assoc =:= map_field_assoc -> 'map-set';
 %%             true -> 'map-update'
 %%          end,
-%%     from_map_update(Fs, Assoc, [Op,Map0,Lk,Lv], Vt2, St2);
+%%     from_map_update(Fs, Assoc, [Op,Map0,[Lk,Lv]], Vt2, St2);
 from_map_update([], _, Map, Vt, St) -> {Map,Vt,St}.
 
 %% from_rec_fields(Recfields, VarTable, State) -> {Recfields,VarTable,State}.
@@ -502,7 +502,7 @@ from_pat_map_assocs([{map_field_exact,_,Key,Val}|As], Vt0, St0) ->
     {Lk,Eqt1,Vt1,St1} = from_pat(Key, Vt0, St0),
     {Lv,Eqt2,Vt2,St2} = from_pat(Val, Vt1, St1),
     {Lfs,Eqt3,Vt3,St3} = from_pat_map_assocs(As, Vt2, St2),
-    {[Lk,Lv|Lfs],Eqt1 ++ Eqt2 ++ Eqt3,Vt3,St3};
+    {[[Lk,Lv]|Lfs],Eqt1 ++ Eqt2 ++ Eqt3,Vt3,St3};
 from_pat_map_assocs([], Vt, St) -> {[],[],Vt,St}.
 
 %% from_pat_rec_fields(Recfields, VarTable, State) ->
@@ -817,9 +817,9 @@ to_bitspecs(Ss, L) ->
         {error,Error} -> illegal_code_error(L, Error)
     end.
 
-%% to_map_pairs(Pairs, LineNumber, VarTable, State) -> {Fields,State}.
+%% to_map_pairs(Pairs, Field, LineNumber, VarTable, State) -> {Fields,State}.
 
-to_map_pairs([K,V|Ps], Field, L, Vt, St0) ->
+to_map_pairs([[K,V]|Ps], Field, L, Vt, St0) ->
     {Ek,St1} = to_expr(K, L, Vt, St0),
     {Ev,St2} = to_expr(V, L, Vt, St1),
     {Eps,St3} = to_map_pairs(Ps, Field, L, Vt, St2),
@@ -1130,7 +1130,7 @@ to_pat_var(V, L, Pvs, Vt0, St0) ->
             {{var,L,V1},[V|Pvs],Vt1,St1}
     end.
 
-to_pat_map_pairs([K,V|Ps], L, Pvs0, Vt0, St0) ->
+to_pat_map_pairs([[K,V]|Ps], L, Pvs0, Vt0, St0) ->
     {Ek,Pvs1,Vt1,St1} = to_pat(K, L, Pvs0, Vt0, St0),
     {Ev,Pvs2,Vt2,St2} = to_pat(V, L, Pvs1, Vt1, St1),
     {Eps,Pvs3,Vt3,St3} = to_pat_map_pairs(Ps, L, Pvs2, Vt2, St2),
