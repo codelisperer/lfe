@@ -27,9 +27,11 @@ This is a description of the type syntax.
   | `(lambda () <type>)`           | `fun(() -> <type>)`            |
   | `(lambda (<tlist>) <type>)`    | `fun((<tlist>) -> <type>)`     |
   | `(map)`                        | `map()`                        |
-  | `(map <pairlist>)`             | `#{<pairlist>}`                |
+  | `#M()`                         | `#{}`                          |
+  | `#M(<pairlist>)`               | `#{<pairlist>}`                |
   | `(tuple)`                      | `tuple()`                      |
-  | `(tuple <tlist>)`              | `{<tlist>}`                    |
+  | `#()`                          | `{}`                           |
+  | `#(<tlist>)`                   | `{<tlist>}`                    |
   | `(UNION <tlist>)`              | `<type> | <type>`              |
 
 Apart from the predefined types in the Erlang type system we also have
@@ -43,6 +45,12 @@ bitstring which starts with `m` bits and continues with segments of
 `(bitstring)` is a short form for a sequence of bits. There is
 currently no short form for an empty binary, `(bitstring 0 0)` must be
 used.
+
+The general form of map types is `#M(<pairlist>)` where `#M()` denotes
+the empty map. The type `(map)` can be viewed as an alias the type
+`#M((any) (any))`.
+
+The type `(tuple)` denotes a tuple of any size.
 
 ## Type Declarations of User-Defined Types
 

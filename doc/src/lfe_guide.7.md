@@ -145,19 +145,17 @@ string.
 Certain control characters can be more readably included by using their
 escaped name:
 
-```
   | Escaped name | Character       |
   |--------------+-----------------|
-  | \b           | Backspace       |
-  | \t           | Tab             |
-  | \n           | Newline         |
-  | \v           | Vertical tab    |
-  | \f           | Form Feed       |
-  | \r           | Carriage Return |
-  | \e           | Escape          |
-  | \s           | Space           |
-  | \d           | Delete          |
-```
+  | `\b`           | Backspace       |
+  | `\t`           | Tab             |
+  | `\n`           | Newline         |
+  | `\v`           | Vertical tab    |
+  | `\f`           | Form Feed       |
+  | `\r`           | Carriage Return |
+  | `\e`           | Escape          |
+  | `\s`           | Space           |
+  | `\d`           | Delete          |
 
 Alternatively you can also use the hexadecimal character encoding,
 e.g. ``"a\nb"`` and ``"a\x0a;b"`` are the same string.
@@ -206,14 +204,14 @@ elements of the list are separated by some form or whitespace. For example:
 
 ## Tuples
 
-Tuples are written as ``#(value1 value2 ...)``.  The empty tuple ``#()`` is also
-valid.
+Tuples are written as ``#(value1 value2 ...)``.  The empty tuple
+``#()`` is also valid.
 
 
 ## Maps
 
-Maps are written as ``#M(key1 value1 key2 value2 ...)`` The empty
-map is also valid and written as ``#M()``.
+Maps are written as ``#M((key1 value1) (key2 value2) ...)``. The empty
+map ``#M()`` is also valid.
 
 
 ## Symbols
@@ -295,10 +293,10 @@ while it reads the expression and then be effectively ``2``.
 (tref tuple index)
 (tset tuple index val)
 (binary seg ... )
-(map key val ...)
+(map (key val) ...)
 (map-get map key) (mref m k)
-(map-set map key val ...) (mset m k v ...)
-(map-update map key val ...) (mupd m k v ...)
+(map-set map (key val) ...) (mset m (k v) ...)
+(map-update map (key val) ...) (mupd m (k v) ...)
 (lambda (arg ...) ...)
 (match-lambda
   ((arg ... ) {{(when e ...)}} ...)           - Matches clauses
@@ -939,7 +937,7 @@ forms are allowed on input but they will always be written as bytes.
 A map is:
 
 ```
-(map key value ... )
+(map (key value) ... )
 ```
 
 To access maps there are the following forms:
@@ -947,19 +945,18 @@ To access maps there are the following forms:
 * ``(map-get map key)`` -
   Return the value associated with key in map.
 
-* ``(map-set map key val ... )`` -
-  Set keys in map to values.
+* ``(map-set map (key val) ... )`` -
+  Set keys in map to values. This form will update existing keys.
 
-* ``(map-update map key val ... )`` -
+* ``(map-update map (key val) ... )`` -
   Update keys in map to values. Note that this form requires all
   the keys to exist.
 
-N.B. This syntax for processing maps has stablized but may change in
-the future!
+N.B. This syntax for processing maps has now stablized!
 
-There is also an alternate short form ``map``, ``mref``, ``mset``,
-``mupd`` based on the Maclisp array reference forms. They take the
-same arguments as their longer alternatives.
+There is also an alternate short form ``mref``, ``mset``, ``mupd``
+based on the Maclisp array reference forms. They take the same
+arguments as their longer alternatives.
 
 
 # List/binary comprehensions

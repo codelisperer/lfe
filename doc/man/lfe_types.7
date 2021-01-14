@@ -90,7 +90,12 @@ T}@T{
 \f[C]map()\f[R]
 T}
 T{
-\f[C](map <pairlist>)\f[R]
+\f[C]#M()\f[R]
+T}@T{
+\f[C]#{}\f[R]
+T}
+T{
+\f[C]#M(<pairlist>)\f[R]
 T}@T{
 \f[C]#{<pairlist>}\f[R]
 T}
@@ -100,7 +105,12 @@ T}@T{
 \f[C]tuple()\f[R]
 T}
 T{
-\f[C](tuple <tlist>)\f[R]
+\f[C]#()\f[R]
+T}@T{
+\f[C]{}\f[R]
+T}
+T{
+\f[C]#(<tlist>)\f[R]
 T}@T{
 \f[C]{<tlist>}\f[R]
 T}
@@ -124,6 +134,13 @@ with segments of \f[C]n\f[R] bits.
 \f[C](bitstring)\f[R] is a short form for a sequence of bits.
 There is currently no short form for an empty binary,
 \f[C](bitstring 0 0)\f[R] must be used.
+.PP
+The general form of map types is \f[C]#M(<pairlist>)\f[R] where
+\f[C]#M()\f[R] denotes the empty map.
+The type \f[C](map)\f[R] can be viewed as an alias the type
+\f[C]#M((any) (any))\f[R].
+.PP
+The type \f[C](tuple)\f[R] denotes a tuple of any size.
 .SS Type Declarations of User-Defined Types
 .PP
 \f[B](deftype (type-name) type-def)\f[R]
