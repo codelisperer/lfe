@@ -388,19 +388,21 @@ exp_form(['map-update'|As], Env, St) ->
 %% compiler as well as the evaluator so we can't do too much here.
 exp_form(['define-record',Name,Fds], Env, St0) ->
     {Efds,St1} = exp_rec_fields(Name, Fds, Env, St0),
+    %% io:format("mdr ~w ~w ~w\n", [Name,Fds,Efds]),
     {['define-record',Name,Efds],St1};
-exp_form(['make-record',Name,Args], Env, St0) ->
+exp_form(['make-record',Name|Args], Env, St0) ->
     {Eas,St1} = exp_rec_args(Name, Args, Env, St0),
-    {['make-record',Name,Eas],St1};
+    {['make-record',Name|Eas],St1};
 exp_form(['record-index',Name,F], _, St) ->
     {['record-index',Name,F],St};
 exp_form(['record-field',E,Name,F], Env, St0) ->
     {Ee,St1} = exp_form(E, Env, St0),
     {['record-field',Ee,Name,F],St1};
-exp_form(['record-update',E,Name,Args], Env, St0) ->
+exp_form(['record-update',E,Name|Args], Env, St0) ->
     {Ee,St1} = exp_form(E, Env, St0),
     {Eas,St2} = exp_rec_args(Name, Args, Env, St1),
-    {['record-update',Ee,Name,Eas],St2};
+    %% io:format("mur ~w ~w ~w\n", [Name,Args,Eas]),
+    {['record-update',Ee,Name|Eas],St2};
 %% Function forms.
 exp_form([function|_]=F, _, St) -> {F,St};
 %% Core closure special forms.
@@ -516,11 +518,11 @@ exp_rec_field(Fdef, Env, St) ->
 %% exp_rec_args(Args, Name, Env, State) -> {ExpArgs,State}.
 %%  Expand the arguments for the record. Field names are literals.
 
-exp_rec_args(Name, [[F | V]|As], Env, St0) ->
-    {Ef,St1} = exp_form(F, Env, St0),
-    {Ev,St2} = exp_form(V, Env, St1),
-    {Eas,St3} = exp_rec_args(Name, As, Env, St2),
-    {[[Ef | Ev]|Eas],St3};
+exp_rec_args(Name, [[F,V]|As], Env, St0) ->
+    %% {Ef,St1} = exp_form(F, Env, St0),
+    {Ev,St1} = exp_form(V, Env, St0),
+    {Eas,St2} = exp_rec_args(Name, As, Env, St1),
+    {[[F,Ev]|Eas],St2};
 exp_rec_args(Name, [F], _, _) -> error({missing_field_value,Name,F});
 exp_rec_args(_, [], _, St) -> {[],St}.
 

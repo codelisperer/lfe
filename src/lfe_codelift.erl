@@ -105,18 +105,18 @@ lift_funcs(Defs, St) ->
 %% Core data special forms.
 lift_expr(?Q(E), Lds, St) -> {?Q(E),Lds,St};
 %% Record forms.
-lift_expr(['make-record',Name,Args], Lds0, St0) ->
+lift_expr(['make-record',Name|Args], Lds0, St0) ->
     {Largs,Lds1,St1} = lift_rec_args(Args, Lds0, St0),
-    {['make-record',Name,Largs],Lds1,St1};
+    {['make-record',Name|Largs],Lds1,St1};
 lift_expr(['record-index',_Name,_F]=Ri, Lds, St) ->
     {Ri,Lds,St};
 lift_expr(['record-field',E,Name,F], Lds0, St0) ->
     {Le,Lds1,St1} = lift_expr(E, Lds0, St0),
     {['record-field',Le,Name,F],Lds1,St1};
-lift_expr(['record-update',E,Name,Args], Lds0, St0) ->
+lift_expr(['record-update',E,Name|Args], Lds0, St0) ->
     {Le,Lds1,St1} = lift_expr(E, Lds0, St0),
     {Largs,Lds2,St2} = lift_rec_args(Args, Lds1, St1),
-    {['record-update',Le,Name,Largs],Lds2,St2};
+    {['record-update',Le,Name|Largs],Lds2,St2};
 %% Function forms.
 lift_expr([function,_,_]=Func, Lds, St) ->
     {Func,Lds,St};
@@ -177,10 +177,10 @@ lift_rec_fields([F|Fs], Lds0, St0) ->
     {[F|Lfs],Lds1,St1};
 lift_rec_fields([], Lds, St) -> {[],Lds,St}.
 
-lift_rec_args([[F | V]|As], Lds0, St0) ->
+lift_rec_args([[F,V]|As], Lds0, St0) ->
     {Lv,Lds1,St1} = lift_expr(V, Lds0, St0),
     {Las,Lds2,St2} = lift_rec_args(As, Lds1, St1),
-    {[[F | Lv]|Las],Lds2,St2};
+    {[[F,Lv]|Las],Lds2,St2};
 lift_rec_args([], Lds, St) -> {[],Lds,St}.
 
 lift_let(Vbs0, Body0, Lds0, St0) ->
@@ -313,15 +313,15 @@ trans_expr([binary|Segs0],  Name, Ar, New, Ivars) ->
     Segs1 = trans_bitsegs(Segs0, Name, Ar, New, Ivars),
     [binary|Segs1];
 %% Record forms.
-trans_expr(['make-record',Rname,Args], Name, Ar, New, Ivars) ->
+trans_expr(['make-record',Rname|Args], Name, Ar, New, Ivars) ->
     Targs = trans_rec_args(Args, Name, Ar, New, Ivars),
-    ['make-record',Rname,Targs];
+    ['make-record',Rname|Targs];
 trans_expr(['record-index',_Name,_F]=Ri, _, _, _, _) ->
     Ri;                                         %Nothing to do here
 trans_expr(['record-field',E,Rname,F], Name, Ar, New, Ivars) ->
     Te = trans_expr(E, Name,  Ar, New, Ivars),
     ['record-field',Te,Rname,F];
-trans_expr(['record-update',E,Rname,Args], Name, Ar, New, Ivars) ->
+trans_expr(['record-update',E,Rname|Args], Name, Ar, New, Ivars) ->
     Te = trans_expr(E, Name,  Ar, New, Ivars),
     Targs = trans_rec_args(Args, Name, Ar, New, Ivars),
     ['update-record',Te,Rname,Targs];
@@ -406,10 +406,10 @@ trans_bitseg(Seg, Name, Ar, New, Ivars) ->
 %%     [F|Tfs];
 %% trans_rec_fields([], _, _, _, _) -> [].
 
-trans_rec_args([F,V|As], Name, Ar, New, Ivars) ->
+trans_rec_args([[F,V]|As], Name, Ar, New, Ivars) ->
     Tv = trans_expr(V, Name, Ar, New, Ivars),
     Tas = trans_rec_args(As, Name, Ar, New, Ivars),
-    [F,Tv|Tas];
+    [[F,Tv]|Tas];
 trans_rec_args([], _, _, _, _) -> [].
 
 trans_cls(Cls, Name, Ar, New, Ivars) ->
@@ -506,12 +506,12 @@ ivars_expr(?Q(_), _Kvars, Ivars) -> Ivars;
 ivars_expr([binary|Segs], Kvars, Ivars) ->
     ivars_bitsegs(Segs, Kvars, Ivars);
 %% Record forms.
-ivars_expr(['make-record',_,Args], Kvars, Ivars) ->
+ivars_expr(['make-record',_|Args], Kvars, Ivars) ->
     ivars_rec_args(Args, Kvars, Ivars);
 ivars_expr(['record-index',_,_], _, Ivars) -> Ivars;
 ivars_expr(['record-field',E,_,_], Kvars, Ivars) ->
     ivars_expr(E, Kvars, Ivars);
-ivars_expr(['record-update',E,_,Args], Kvars, Ivars0) ->
+ivars_expr(['record-update',E,_|Args], Kvars, Ivars0) ->
     Ivars1 = ivars_expr(E, Kvars, Ivars0),
     ivars_rec_args(Args, Kvars, Ivars1);
 %% Function forms.
@@ -574,7 +574,7 @@ ivars_bitseg([Val|Specs], Kvars, Ivars0) ->
 ivars_bitseg(Val, Kvars, Ivars) ->
     ivars_expr(Val, Kvars, Ivars).
 
-ivars_rec_args([_F,V|As], Kvars, Ivars0) ->
+ivars_rec_args([[_F,V]|As], Kvars, Ivars0) ->
     Ivars1 = ivars_expr(V, Kvars, Ivars0),
     ivars_rec_args(As, Kvars, Ivars1);
 ivars_rec_args([], _, Ivars) -> Ivars.

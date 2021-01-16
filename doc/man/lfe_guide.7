@@ -380,10 +380,10 @@ the expression and then be effectively \f[C]2\f[R].
 (call mod func arg ... )    - Call to Mod:Func(Arg, ... )
 
 (define-record name fields)
-(make-record name fields)
+(make-record name field ...)
 (record-index name field)
 (record-field record name field)
-(record-update record name fields)
+(record-update record name {{field]} ...)
 
 (define-module name meta-data attributes)
 (extend-module meta-data attributes)
@@ -694,6 +694,7 @@ The basic forms for defining macros are:
 \f[C]
 (define-macro name meta-data lambda|match-lambda)
 (let-macro ((name lambda|match-lambda)
+            ...)
   ...)
 \f[R]
 .fi
@@ -878,10 +879,10 @@ it are:
 (define-record name ((field) | field
                      (field default-value)
                      (field default-value type) ...))
-(make-record name ((field . value) (field . value) ...))
+(make-record name (field value) (field value) ...)
 (record-index name field)
 (record-field record name field)
-(record-update record name ((field . value) (field . value) ...))
+(record-update record name (field value) (field value) ...)
 \f[R]
 .fi
 .PP
@@ -907,7 +908,7 @@ To make an instance of a \f[C]person\f[R] record we do:
 .IP
 .nf
 \f[C]
-(make-record person ((name . \[dq]Robert\[dq]) (age . 54)))
+(make-record person (name \[dq]Robert\[dq]) (age 54))
 \f[R]
 .fi
 .PP
@@ -920,7 +921,7 @@ and the set it by doing (the variable \f[C]robert\f[R] references a
 .nf
 \f[C]
 (record-field robert person address)
-(record-update robert person ((address . \[dq]my home\[dq]) (age . 55)))
+(record-update robert person (address \[dq]my home\[dq]) (age 55))
 \f[R]
 .fi
 .PP

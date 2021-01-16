@@ -93,7 +93,7 @@ from_expr({map,_,Map,Assocs}, Vt0, St0) ->      %Update a map
 %% Record special forms.
 from_expr({record,_,Name,Fs}, Vt0, St0) ->
     {Lfs,Vt1,St1} = from_rec_fields(Fs, Vt0, St0),
-    {['make-record',Name,Lfs],Vt1,St1};
+    {['make-record',Name|Lfs],Vt1,St1};
 from_expr({record_index,_,Name,{atom,_,F}}, Vt, St) -> %We KNOW!
     {['record-index',Name,F],Vt,St};
 from_expr({record_field,_,E,Name,{atom,_,F}}, Vt0, St0) -> %We KNOW!
@@ -102,7 +102,7 @@ from_expr({record_field,_,E,Name,{atom,_,F}}, Vt0, St0) -> %We KNOW!
 from_expr({record,_,E,Name,Fs}, Vt0, St0) ->
     {Le,Vt1,St1} = from_expr(E, Vt0, St0),
     {Lfs,Vt2,St2} = from_rec_fields(Fs, Vt1, St1),
-    {['record-update',Le,Name,Lfs],Vt2,St2};
+    {['record-update',Le,Name|Lfs],Vt2,St2};
 from_expr({record_field,_,_,_}=M, Vt, St) ->    %Pre R16 packages
     from_package_module(M, Vt, St);
 %% Function special forms.
@@ -294,12 +294,12 @@ from_map_update([], _, Map, Vt, St) -> {Map,Vt,St}.
 from_rec_fields([{record_field,_,{atom,_,F},V}|Fs], Vt0, St0) ->
     {Lv,Vt1,St1} = from_expr(V, Vt0, St0),
     {Lfs,Vt2,St2} = from_rec_fields(Fs, Vt1, St1),
-    {[[F | Lv]|Lfs],Vt2,St2};
+    {[[F,Lv]|Lfs],Vt2,St2};
 from_rec_fields([{record_field,_,{var,_,F},V}|Fs], Vt0, St0) ->
     %% Special case!!
     {Lv,Vt1,St1} = from_expr(V, Vt0, St0),
     {Lfs,Vt2,St2} = from_rec_fields(Fs, Vt1, St1),
-    {[[F | Lv]|Lfs],Vt2,St2};
+    {[[F,Lv]|Lfs],Vt2,St2};
 from_rec_fields([], Vt, St) -> {[],Vt,St}.
 
 %% from_icrt_cls(Clauses, VarTable, State) -> {Clauses,VarTable,State}.
@@ -453,7 +453,7 @@ from_pat({map,_,Assocs}, Vt0, St0) ->
     {[map|Ps],Eqt,Vt1,St1};
 from_pat({record,_,R,Fs}, Vt0, St0) ->          %Match a record
     {Sfs,Eqt,Vt1,St1} = from_pat_rec_fields(Fs, Vt0, St0),
-    {['make-record',R,Sfs],Eqt,Vt1,St1};
+    {['make-record',R|Sfs],Eqt,Vt1,St1};
 from_pat({record_index,_,R,{atom,_,F}}, Vt, St) -> %We KNOW!
     {['record-index',R,F],Vt,St};
 from_pat({match,_,P1,P2}, Vt0, St0) ->          %Aliases
@@ -511,12 +511,12 @@ from_pat_map_assocs([], Vt, St) -> {[],[],Vt,St}.
 from_pat_rec_fields([{record_field,_,{atom,_,F},P}|Fs], Vt0, St0) ->
     {Lp,Eqt,Vt1,St1} = from_pat(P, Vt0, St0),
     {Lfs,Eqts,Vt2,St2} = from_pat_rec_fields(Fs, Vt1, St1),
-    {[F,Lp|Lfs],Eqt++Eqts,Vt2,St2};
+    {[[F,Lp]|Lfs],Eqt++Eqts,Vt2,St2};
 from_pat_rec_fields([{record_field,_,{var,_,F},P}|Fs], Vt0, St0) ->
     %% Special case!!
     {Lp,Eqt,Vt1,St1} = from_pat(P, Vt0, St0),
     {Lfs,Eqts,Vt2,St2} = from_pat_rec_fields(Fs, Vt1, St1),
-    {[F,Lp|Lfs],Eqt++Eqts,Vt2,St2};
+    {[[F,Lp]|Lfs],Eqt++Eqts,Vt2,St2};
 from_pat_rec_fields([], Vt, St) -> {[],[],Vt,St}.
 
 %% from_lit(Literal) -> Literal.
@@ -633,7 +633,7 @@ to_expr(['map-set',Map|Ps], L, Vt, St) ->
 to_expr(['map-update',Map|Ps], L, Vt, St) ->
     to_expr([mupd,Map|Ps], L, Vt, St);
 %% Record special forms.
-to_expr(['make-record',Name,Fs], L, Vt, St0) ->
+to_expr(['make-record',Name|Fs], L, Vt, St0) ->
     {Efs,St1} = to_rec_fields(Fs, L, Vt, St0),
     {{record,L,Name,Efs},St1};
 to_expr(['record-index',Name,F], L, _, St) ->
@@ -641,7 +641,7 @@ to_expr(['record-index',Name,F], L, _, St) ->
 to_expr(['record-field',E,Name,F], L, Vt, St0) ->
     {Ee,St1} = to_expr(E, L, Vt, St0),
     {{record_field,L,Ee,Name,{atom,L,F}},St1};
-to_expr(['record-update',E,Name,Fs], L, Vt, St0) ->
+to_expr(['record-update',E,Name|Fs], L, Vt, St0) ->
     {Ee,St1} = to_expr(E, L, Vt, St0),
     {Efs,St2} = to_rec_fields(Fs, L, Vt, St1),
     {{record,L,Ee,Name,Efs},St2};
@@ -828,12 +828,12 @@ to_map_pairs([], _, _, _, St) -> {[],St}.
 
 %% to_rec_fields(Fields, LineNumber, VarTable, State) -> {Fields,State}.
 
-to_rec_fields([['_' | V]|Fs], L, Vt, St0) ->
+to_rec_fields([['_',V]|Fs], L, Vt, St0) ->
     %% Special case!!
     {Ev,St1} = to_expr(V, L, Vt, St0),
     {Efs,St2} = to_rec_fields(Fs, L, Vt, St1),
     {[{record_field,L,{var,L,'_'},Ev}|Efs],St2};
-to_rec_fields([[F | V]|Fs], L, Vt, St0) ->
+to_rec_fields([[F,V]|Fs], L, Vt, St0) ->
     {Ev,St1} = to_expr(V, L, Vt, St0),
     {Efs,St2} = to_rec_fields(Fs, L, Vt, St1),
     {[{record_field,L,{atom,L,F},Ev}|Efs],St2};
@@ -1094,7 +1094,7 @@ to_pat([binary|Segs], L, Pvs0, Vt0, St0) ->
 to_pat([map|Pairs], L, Pvs0, Vt0, St0) ->
     {As,Pvs1,Vt1,St1} = to_pat_map_pairs(Pairs, L, Pvs0, Vt0, St0),
     {{map,L,As},Pvs1,Vt1,St1};
-to_pat(['make-record',R,Fs], L, Pvs0, Vt0, St0) ->
+to_pat(['make-record',R|Fs], L, Pvs0, Vt0, St0) ->
     {Efs,Pvs1,Vt1,St1} = to_pat_rec_fields(Fs, L, Pvs0, Vt0, St0),
     {{record,L,R,Efs},Pvs1,Vt1,St1};
 to_pat(['record-index',R,F], L, Pvs, Vt, St) ->
@@ -1170,12 +1170,12 @@ to_pat_bin_size(Size, L, Pvs, Vt, St) -> to_pat(Size, L, Pvs, Vt, St).
 %% to_pat_rec_fields(Fields, LineNumber, PatVars, VarTable, State) ->
 %%     {Fields,PatVars,VarTable,State}.
 
-to_pat_rec_fields([['_' | P]|Fs], L, Pvs0, Vt0, St0) ->
+to_pat_rec_fields([['_',P]|Fs], L, Pvs0, Vt0, St0) ->
     %% Special case!!
     {Ep,Pvs1,Vt1,St1} = to_pat(P, L, Pvs0, Vt0, St0),
     {Efs,Pvs2,Vt2,St2} = to_pat_rec_fields(Fs, L, Pvs1, Vt1, St1),
     {[{record_field,L,{var,L,'_'},Ep}|Efs],Pvs2,Vt2,St2};
-to_pat_rec_fields([[F | P]|Fs], L, Pvs0, Vt0, St0) ->
+to_pat_rec_fields([[F,P]|Fs], L, Pvs0, Vt0, St0) ->
     {Ep,Pvs1,Vt1,St1} = to_pat(P, L, Pvs0, Vt0, St0),
     {Efs,Pvs2,Vt2,St2} = to_pat_rec_fields(Fs, L, Pvs1, Vt1, St1),
     {[{record_field,L,{atom,L,F},Ep}|Efs],Pvs2,Vt2,St2};

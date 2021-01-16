@@ -627,14 +627,14 @@ check_expr([function,M,F,Ar], _, L, St) ->
        true -> bad_form_error(L, function, St)
     end;
 %% Check record special forms.
-check_expr(['make-record',Name,Fs], Env, L, St) ->
+check_expr(['make-record',Name|Fs], Env, L, St) ->
     check_record(Name, Fs, Env, L, St);
 check_expr(['record-index',Name,F], _Env, L, St) ->
     check_record_field(Name, F, L, St);
 check_expr(['record-field',E,Name,F], Env, L, St0) ->
     St1 = check_expr(E, Env, L, St0),
     check_record_field(Name, F, L, St1);
-check_expr(['record-update',E,Name,Fs], Env, L, St0) ->
+check_expr(['record-update',E,Name|Fs], Env, L, St0) ->
     St1 = check_expr(E, Env, L, St0),
     check_record(Name, Fs, Env, L, St1);
 %% Special known data type operations.
@@ -871,10 +871,10 @@ check_record(Name, Fields, Env, L, #lfe_lint{recs=Recs}=St)
 check_record(Name, _, _, L, St) ->
     bad_record_error(L, Name, St).
 
-check_record_fields(Name, [['_' | _Val]|Fs], Rfs, Env, L, St) ->
+check_record_fields(Name, [['_',_Val]|Fs], Rfs, Env, L, St) ->
     %% The _ field is special!
     check_record_fields(Name, Fs, Rfs, Env, L, St);
-check_record_fields(Name, [[F | Val]|Fs], Rfs, Env, L, St0) ->
+check_record_fields(Name, [[F,Val]|Fs], Rfs, Env, L, St0) ->
     case lists:member(F, Rfs) of
         true ->
             St1 = check_expr(Val, Env, L, St0),
@@ -1295,7 +1295,7 @@ pattern([binary|Segs], Pvs, Env, L, St) ->
 pattern([map|Ps], Pvs, Env, L, St) ->
     pat_map(Ps, Pvs, Env, L, St);
 %% Check record patterns.
-pattern(['make-record',Name,Fs], Pvs, Env, L, St) ->
+pattern(['make-record',Name|Fs], Pvs, Env, L, St) ->
     check_record_pat(Name, Fs, Pvs, Env, L, St);
 pattern(['record-index',Name,F], _Pvs, _Env, L, St) ->
     check_record_field(Name, F, L, St);
@@ -1482,7 +1482,7 @@ check_record_pat(Name, Fields, Pvs, Env, L, #lfe_lint{recs=Recs}=St)
 check_record_pat(Name, _, Pvs, _, L, St) ->
     {Pvs,bad_record_error(L, Name, St)}.
 
-check_record_pat_fields(Name, [[F | Pat]|Fs], Rfs, Pvs0, Env, L, St0) ->
+check_record_pat_fields(Name, [[F,Pat]|Fs], Rfs, Pvs0, Env, L, St0) ->
     case lists:member(F, Rfs) of
         true ->
             {Pvs1,St1} = pattern(Pat, Pvs0, Env, L, St0),

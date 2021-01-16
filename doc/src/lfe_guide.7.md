@@ -339,10 +339,10 @@ while it reads the expression and then be effectively ``2``.
 (call mod func arg ... )    - Call to Mod:Func(Arg, ... )
 
 (define-record name fields)
-(make-record name fields)
+(make-record name field ...)
 (record-index name field)
 (record-field record name field)
-(record-update record name fields)
+(record-update record name {{field]} ...)
 
 (define-module name meta-data attributes)
 (extend-module meta-data attributes)
@@ -621,6 +621,7 @@ macros are:
 ```
 (define-macro name meta-data lambda|match-lambda)
 (let-macro ((name lambda|match-lambda)
+            ...)
   ...)
 ```
 
@@ -785,10 +786,10 @@ updating it are:
 (define-record name ((field) | field
                      (field default-value)
                      (field default-value type) ...))
-(make-record name ((field . value) (field . value) ...))
+(make-record name (field value) (field value) ...)
 (record-index name field)
 (record-field record name field)
-(record-update record name ((field . value) (field . value) ...))
+(record-update record name (field value) (field value) ...)
 ```
 
 Note that the list of field/value pairs when making or updating a
@@ -810,7 +811,7 @@ value ``""``), ``address`` (default value ``""`` and type
 we do:
 
 ```
-(make-record person ((name . "Robert") (age . 54)))
+(make-record person (name "Robert") (age 54))
 ```
 
 The ``make-record`` form is also used to define a pattern.
@@ -821,7 +822,7 @@ record):
 
 ```
 (record-field robert person address)
-(record-update robert person ((address . "my home") (age . 55)))
+(record-update robert person (address "my home") (age 55))
 ```
 
 Note that we must include the name of the record when accessing it and

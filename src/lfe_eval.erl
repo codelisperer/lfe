@@ -186,7 +186,7 @@ eval_expr(['map-set',M|As], Env) ->
 eval_expr(['map-update',M|As], Env) ->
     eval_expr([mupd,M|As], Env);
 %% Record special forms.
-eval_expr(['make-record',Name,Args], Env) ->
+eval_expr(['make-record',Name|Args], Env) ->
     case lfe_env:get_record(Name, Env) of
         {yes,Fields} ->
             make_record_tuple(Name, Fields, Args, Env);
@@ -206,7 +206,7 @@ eval_expr(['record-field',E,Name,F], Env) ->
             element(Index, Ev);                 %Report if Ev not a record
         no -> undefined_record_error(Name)
     end;
-eval_expr(['record-update',E,Name,Args], Env) ->
+eval_expr(['record-update',E,Name|Args], Env) ->
     Ev = eval_expr(E, Env),
     case lfe_env:get_record(Name, Env) of
         {yes,Fields} ->
@@ -297,7 +297,7 @@ make_record_elements(Fields, Args, Env) ->
            end,
     lists:map(Mfun, Fields).
 
-make_field_val(F, [[F | V]|_], _Def, Env) -> eval_expr(V, Env);
+make_field_val(F, [[F,V]|_], _Def, Env) -> eval_expr(V, Env);
 make_field_val(F, [_|Args], Def, Env) ->
     make_field_val(F, Args, Def, Env);
 make_field_val(_, [], Def, Env) -> expr(Def, Env).
@@ -327,7 +327,7 @@ update_record_elements(Fields, Recvs, Args, Env) ->
            end,
     lists:zipwith(Ufun, Fields, Recvs).
 
-update_field_val(F, [[F | V]|_], _Recv, Env) -> eval_expr(V, Env);
+update_field_val(F, [[F,V]|_], _Recv, Env) -> eval_expr(V, Env);
 update_field_val(F, [_|Args], Recv, Env) ->
     update_field_val(F, Args, Recv, Env);
 update_field_val(_, [], Recv, _Env) -> Recv.
@@ -1025,7 +1025,7 @@ match([map|Ps], Val, Pbs, Env) ->
         false -> no
     end;
 %% Record patterns.
-match(['make-record',Name,Fs], Val, Pbs, Env) ->
+match(['make-record',Name|Fs], Val, Pbs, Env) ->
     case lfe_env:get_record(Name, Env) of
         {yes,Fields} ->
             match_record_tuple(Name, Fields, Fs,  Val, Pbs, Env);
@@ -1089,7 +1089,7 @@ match_record_patterns(Fields, Pats) ->
            end,
     lists:map(Mfun, Fields).
 
-make_field_pat(F, [[F | P]|_]) -> P;
+make_field_pat(F, [[F,P]|_]) -> P;
 make_field_pat(F, [_|Pats]) -> make_field_pat(F, Pats);
 make_field_pat(_, []) -> '_'.                   %Underscore matches anything
 
